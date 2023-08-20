@@ -1,0 +1,29 @@
+import numpy as np
+from hmmlearn import hmm
+import librosa
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Pasa 1: Cargar  los datos
+data = pd.read_csv('/content/train_emo.csv')
+file_paths = data['path'].tolist()
+y_train = data['emotion'].tolist()
+
+# Paso 2: Extracción de características (ejemplo simple con MFCC)
+def extract_mfcc_features(file_path):
+    signal, sr = librosa.load(file_path, sr=22050)  # Cargar la señal de audio
+    mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=20, norm="ortho")  # Usar y=signal en lugar de signal
+    return mfccs.T  # Transponer los resultados para que cada fila sea un vector de características
+
+# Mostrar las primeras 5 observaciones con sus características MFCC
+for i, file_path in enumerate(file_paths[:5]):
+    print(f"Observación {i + 1}: {file_path}")
+    #plot_waveform(file_path)
+    print("-------------------------------------------------")
+
+    mfcc_features = extract_mfcc_features(file_path)
+    print(f"Observación {i + 1}:")
+    print(mfcc_features)
+    print("dimension de las observaciones")
+    print(mfcc_features.shape)
+    print("-------------------------------------------------")
