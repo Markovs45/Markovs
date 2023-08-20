@@ -9,6 +9,7 @@ import seaborn as sns
 data = pd.read_csv('/content/train_emo.csv')
 file_paths = data['path'].tolist()
 y_train = data['emotion'].tolist()
+
 # Paso 2: Extracción de características )
 def extract_mfcc_features(file_path):
     signal, sr = librosa.load(file_path, sr=22050)
@@ -46,7 +47,6 @@ for file_path in file_paths_test:
     y_test_pred_labels.append(num_to_emotion[best_label])
 
 # Enumeracion de etiquetas a texto
-
 num_to_emotion = {
     0: "Triste",
     1: "neutral",
