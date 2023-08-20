@@ -1,0 +1,80 @@
+import numpy as np
+from hmmlearn import hmm
+import librosa
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import seaborn as sns
+# Paso 1: Cargar los datos desde el archivo CSV
+data = pd.read_csv('/content/train_emo.csv')
+file_paths = data['path'].tolist()
+y_train = data['emotion'].tolist()
+# Paso 2: Extracción de características )
+def extract_mfcc_features(file_path):
+    signal, sr = librosa.load(file_path, sr=22050)
+    mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=25,)
+    return mfccs.T
+
+# Paso 3: Entrenamiento del modelo HMM
+n_emotions = len(set(y_train))
+models = []  # Lista para almacenar modelos HMM entrenados para cada emoción
+for emotion_label in range(n_emotions):
+    X_train_emotion = [extract_mfcc_features(file_path) for i, file_path in enumerate(file_paths) if y_train[i] == emotion_label]
+    X_train_emotion_concatenated = np.vstack(X_train_emotion)
+    model = hmm.GaussianHMM(n_components=n_emotions, covariance_type='full', n_iter=1000)
+    model.fit(X_train_emotion_concatenated)
+    models.append(model)
+
+# Paso 4: Verificación del modelo
+
+# Cargar los datos del conjunto de pruebas desde el archivo CSV
+data_test = pd.read_csv('/content/test_emo.csv')
+file_paths_test = data_test['path'].tolist()
+y_test_true = data_test['emotion'].tolist()
+
+# Predicción de emociones en el conjunto de pruebas para cada archivo por separado
+y_test_pred_labels = []
+for file_path in file_paths_test:
+    X_test_mfcc_single = extract_mfcc_features(file_path)
+    best_score = float('-inf')
+    best_label = None
+    for emotion_label, model in enumerate(models):
+        score = model.score(X_test_mfcc_single)
+        if score > best_score:
+            best_score = score
+            best_label = emotion_label
+    y_test_pred_labels.append(num_to_emotion[best_label])
+
+# Enumeracion de etiquetas a texto
+
+num_to_emotion = {
+    0: "Triste",
+    1: "neutral",
+    2: "feliz",
+    3: "Ira",
+    4: "Asco",
+    5: "Miedo",
+    6: "Aburrimiento"
+}
+
+# Mostrar todas las etiquetas predichas por el modelo
+print("Etiquetas predichas por el modelo:")
+print(y_test_pred_labels)
+emotion_to_num = {v: k for k, v in num_to_emotion.items()}
+
+# Convertir las etiquetas de texto en y_test_pred_labels a números enteros
+y_test_pred_labels_numeric = [emotion_to_num[label] for label in y_test_pred_labels]
+
+# Calcular la exactitud
+accuracy = accuracy_score(y_test_true, y_test_pred_labels_numeric)
+print("Exactitud:", accuracy)
+
+# Calcular la matriz de confusión
+confusion = confusion_matrix(y_test_true, y_test_pred_labels_numeric)
+print("Matriz de Confusión:")
+print(confusion)
+
+# Calcular precision, recall y F1-score
+report = classification_report(y_test_true, y_test_pred_labels_numeric)
+print("Reporte de Clasificación:")
+print(report)
