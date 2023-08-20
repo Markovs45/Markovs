@@ -1,0 +1,92 @@
+import glob
+import pandas as pd
+import os
+import random
+
+def write_emodb_csv(emotions=["0", "1", "2", "3", "4", "5", "6"],
+                    train_name="entrenamineto_emo.csv", test_name="prueba_emo.csv",
+                    train_size=0.8, verbose=1):
+    target = {"path": [], "emotion": []}
+    categories = {
+        "W": "3",
+        "L": "6",
+        "E": "4",
+        "A": "5",
+        "F": "2",
+        "T": "0",
+        "N": "1"
+    }
+    # delete not specified emotions
+    categories_reversed = {v: k for k, v in categories.items()}
+    for emotion, code in categories_reversed.items():
+        if emotion not in emotions:
+            del categories[code]
+    for file in glob.glob('/content/hmm/wav/*.wav'):
+        try:
+            basename = os.path.basename(file)
+            if len(basename) >= 6:  # Verificar que la cadena tenga al menos 6 caracteres
+                emotion = categories[basename[5]]
+            else:
+                continue
+        except KeyError:
+            continue
+        target['emotion'].append(emotion)
+        target['path'].append(file)
+    if verbose:
+        print("[EMO-DB] Total files to write:", len(target['path']))
+
+    # Shuffle the data to ensure randomness before splitting
+    combined_data = list(zip(target['path'], target['emotion']))
+    random.shuffle(combined_data)
+    target['path'], target['emotion'] = zip(*combined_data)
+
+    # Define the specific number of samples per emotion for the test set
+    test_samples_per_emotion = {
+        "0": 11,
+        "1": 19,
+        "2": 18,
+        "3": 19,
+        "4": 5,
+        "5": 17,
+        "6": 18
+    }
+
+    # Initialize counters
+    test_counter = {emotion: 0 for emotion in emotions}
+    test_indices = []
+    train_indices = []
+
+    # Divide the data into training/testing sets, ensuring the specific number of samples for the test set
+    for index, emotion in enumerate(target['emotion']):
+        if test_counter[emotion] < test_samples_per_emotion[emotion]:
+            test_indices.append(index)
+            test_counter[emotion] += 1
+        else:
+            train_indices.append(index)
+
+    # Create the training/testing sets
+    X_train = [target['path'][i] for i in train_indices]
+    X_test = [target['path'][i] for i in test_indices]
+    y_train = [target['emotion'][i] for i in train_indices]
+    y_test = [target['emotion'][i] for i in test_indices]
+
+    train_path = os.path.join(os.getcwd(), train_name)
+    test_path = os.path.join(os.getcwd(), test_name)
+
+    pd.DataFrame({"path": X_train, "emotion": y_train}).to_csv(train_name)
+    pd.DataFrame({"path": X_test, "emotion": y_test}).to_csv(test_name)
+
+    # Verificar la existencia de los archivos CSV generados
+    if os.path.isfile(train_name):
+        print("El archivo de entrenamiento existe:", train_name)
+    else:
+        print("El archivo de entrenamiento no existe:", train_name)
+
+    if os.path.isfile(test_name):
+        print("El archivo de prueba existe:", test_name)
+    else:
+        print("El archivo de prueba no existe:", test_name)
+
+# Llamar a la función write_emodb_csv con los argumentos deseados
+write_emodb_csv(emotions=["0", "1", "2", "3", "4", "5", "6"], train_name="train_emo.csv",
+                test_name="test_emo.csv", train_size=0.8, verbose=1)
