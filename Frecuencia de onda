@@ -1,0 +1,28 @@
+import librosa
+import matplotlib.pyplot as plt
+
+# Carga de datos
+data = pd.read_csv('/content/train_emo.csv')
+file_paths = data['path'].tolist()
+y_train = data['emotion'].tolist()
+
+# Extracción de características 
+def extract_mfcc_features(file_path):
+    signal, sr = librosa.load(file_path, sr=22050)  
+    mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=20, norm="ortho")  
+    return mfccs.T  
+
+# Extraer características MFCC para todos los archivos de audio
+all_mfcc_features = [extract_mfcc_features(file_path) for file_path in file_paths[:3]]
+
+# Crear el diagrama de dispersión de características
+plt.figure(figsize=(8, 6))
+for i, mfcc_features in enumerate(all_mfcc_features):
+    plt.scatter(mfcc_features[:, 0], mfcc_features[:, 1], label=f"Observación {i+1}")
+
+plt.title("Diagrama de Dispersión de Características MFCC")
+plt.xlabel("Coeficiente MFCC 1")
+plt.ylabel("Coeficiente MFCC 2")
+plt.legend()
+plt.grid(True)
+plt.show()
