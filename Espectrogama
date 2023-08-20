@@ -1,0 +1,22 @@
+import numpy as np
+import librosa
+import pandas as pd
+import matplotlib.pyplot as plt
+# Paso 1: Cargar los datos desde el archivo CSV
+data = pd.read_csv('/content/train_emo.csv')
+file_paths = data['path'].tolist()
+y_train = data['emotion'].tolist()
+
+# Paso 2: Extracción de características (ejemplo simple con MFCC)
+def extract_mfcc_features(file_path):
+    signal, sr = librosa.load(file_path, sr=22050)  # Cargar la señal de audio
+    mfccs = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=20, norm="ortho") 
+    return mfccs.T  # Transponer los resultados para que cada fila sea un vector de características
+# Visualizar los coeficientes MFCC como un espectrogama
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(mfcc_features, x_axis='time')
+    plt.colorbar()
+    plt.title(f"MFCC - Observación {i + 1}")
+    plt.xlabel("Tiempo")
+    plt.ylabel("Coeficiente MFCC")
+    plt.show()
