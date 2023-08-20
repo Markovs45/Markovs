@@ -1,0 +1,22 @@
+import librosa
+import matplotlib.pyplot as plt
+
+# Cargar los datos desde el archivo CSV
+data = pd.read_csv('/content/train_emo.csv')
+file_paths = data['path'].tolist()
+y_train = data['emotion'].tolist()
+
+def plot_waveform(file_path):
+    signal, sr = librosa.load(file_path, sr=22050)  # Cargar la señal de audio
+    plt.figure(figsize=(10, 4))
+    librosa.display.waveshow(signal, sr=sr)
+    plt.title("Forma de onda")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Amplitud")
+    plt.show()
+
+# Mostrar las primeras 5 observaciones con sus formas de onda
+for i, file_path in enumerate(file_paths[:3]):
+    print(f"Observación {i + 1}: {file_path}")
+    plot_waveform(file_path)
+    print("-------------------------------------------------")
